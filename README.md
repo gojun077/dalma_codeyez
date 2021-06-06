@@ -36,17 +36,16 @@ References
 
 ## Dependencies
 
-This app is written in Python 3.9 and depends on Selenium,
-chromium-chromedriver, and the following Python modules:
+This app is written in Python 3 and depends on Selenium,
+chromium-chromedriver, and the following Python modules outside stdlib:
 
-- `datetime`
 - `requests`
 - `selenium`
 
 ## Roadmap
 
-- `v0.1` initial version with naive problem counts, public API only
-- `v0.2` support cookie login for privileged pages, add DB backend
+- `v0.1.0` initial version with naive problem counts, public API only
+- `v0.2.0` support cookie login for privileged pages, add DB backend
 
 ### v0.1 Alpha
 
@@ -56,16 +55,20 @@ Euler only return info on HOW MANY problems have been solved by a user, but
 provide no info on WHICH problems have been solved. Leetcode does provide
 separate counts of easy/med/hard problems solved, however.
 
-Unlike Leetcode and Project Euler, Codewars provides both a total count of
-problems solved as well as info on *which* problems were solved and in what
-language(s). You can also get information on problem difficulty rated from
-8 kyu (easiest) to 1 kyu (hardest).
+Unlike Leetcode and Project Euler, Codewars public API provides both a
+total count of problems solved as well as info on *which* problems were
+solved and in what language(s). You can also get information on problem
+difficulty rated from 8 kyu (easiest) to 1 kyu (hardest).
 
 The alpha version will calculate solved problem counts on the fly and will
 only store the last count and the current count of solved problems in the
 files `old_count`, `new_count`. If there has been a non-negative change in
 the count, an HTTP POST request will be sent to Beeminder API containing a
 timestamp and the positive delta.
+
+The following files will stored `~/.local/codeyez`:
+
+- Beeminder API credentials json file
 
 ### v0.2 Beta
 
@@ -80,21 +83,19 @@ the login page requires a CAPTCHA to be solved by a human. What you can do
 instead is manually export your Project Euler session cookie from Chrome
 using a browser extension like *Export cookie JSON file for Puppeteer*.
 
-The following credential files will be added to `.gitignore`:
+The following files will stored `~/.local/codeyez`:
 
-- `leetcode_user_pass.json`
-  + of the form `{"username": "foo", "pass": "bar"}`
 - `leetcode_scookie.json`
   + `{"LEETCODE_SESSION": "391 char alphanum"}`
 - `proj_euler_scookie.json`
   + `{"PHPSESSID": "123abc..."}`
+- sqlite3 DB file
 
 After manually exporting your session cookie from Project Euler, you will
 need to copy-paste the relevant key values into `proj_euler_scookie.json`
 Once you have seeded this file, however, you won't need to re-seed it for
-one month. The Leetcode session cookie json file never needs to be seeded; if
-this file is missing, `dalma_codeyez` will create it after logging in
-to Leetcode programmatically.
+one month. The Leetcode session cookie has an expiration of 2 weeks, so
+it will need to be re-seeded upon expiration.
 
 `v0.2` will use `sqlite3` as its backend DB and will store data on *all*
 problems from Codewars, Leetcode, and Project Euler. A custom point system
@@ -124,11 +125,11 @@ which problems were recently solved.
 
 For each problem that was added to the DB within 60s of `dalma_codeyez`
 execution, an HTTP POST request with JSON payload will be sent to the
-Beeminder API for the goal to acquire *x* 'coding points' per week. The
+Beeminder API for the goal *acquire n 'coding points' per week*. The
 payload will contain the following info:
 
 - Name of problem solved
 - Problem difficulty
 - Point value
 - Language used (for Codewars)
-- Solution Date (timestamp at time on INSERT)
+- Solution Date (timestamp of INSERT to `sqlite3`)
